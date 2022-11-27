@@ -1,4 +1,5 @@
 import { AssignedTemplateInstance, TemplateInstance } from 'https://cdn.jsdelivr.net/npm/template-extensions/+esm';
+import Cookies from 'https://cdn.jsdelivr.net/npm/js-cookie/+esm';
 import { processor } from './template-processor.js';
 
 class TodoApp extends HTMLElement {
@@ -10,7 +11,7 @@ class TodoApp extends HTMLElement {
   constructor() {
     super();
 
-    const stored = localStorage.getItem('todos-tex');
+    const stored = Cookies.get('todos-tex');
     this.#todos = stored ? JSON.parse(stored).todos : [];
 
     let tpl = document.querySelector('#header-tpl');
@@ -18,7 +19,7 @@ class TodoApp extends HTMLElement {
     tpl.remove();
 
     tpl = document.querySelector('#main-tpl');
-    this.#template = new TemplateInstance(tpl, this, processor);
+    this.#template = new TemplateInstance(tpl, this.#state, processor);
     tpl.replaceWith(this.#template);
 
     this.addEventListener('destroy', this.handleEvent);
@@ -27,6 +28,28 @@ class TodoApp extends HTMLElement {
     const updateView = () => (this.filter = location.hash.slice(2));
     window.addEventListener('hashchange', updateView);
     updateView();
+  }
+
+  get #state() {
+    let state = {};
+    Object.getOwnPropertyNames(this.constructor.prototype)
+      .forEach(name => (state[name] = this[name]));
+    return {
+      ...this,
+      ...state,
+      allSelected: !this.filter ? 'selected' : '',
+      activeSelected: this.filter === 'active' ? 'selected' : '',
+      completedSelected: this.filter === 'completed' ? 'selected' : '',
+    };
+  }
+
+  #update = () => {
+    this.#save();
+    this.#template.update(this.#state);
+  }
+
+  #save = () => {
+    Cookies.set('todos-tex', JSON.stringify({ todos: this.#todos }));
   }
 
   attributeChangedCallback() {
@@ -54,22 +77,6 @@ class TodoApp extends HTMLElement {
     if (this.filter === 'active') return this.active;
     if (this.filter === 'completed') return this.completed;
     return this.#todos;
-  }
-
-  #update = (state = {}) => {
-    Object.getOwnPropertyNames(this.constructor.prototype)
-      .forEach(name => (state[name] = this[name]));
-    this.#save();
-    this.#template.update({
-      ...state,
-      allSelected: !this.filter ? 'selected' : '',
-      activeSelected: this.filter === 'active' ? 'selected' : '',
-      completedSelected: this.filter === 'completed' ? 'selected' : '',
-    });
-  }
-
-  #save = () => {
-    localStorage.setItem('todos-tex', JSON.stringify({ todos: this.#todos }));
   }
 
   handleEvent = ({ type, detail: { id, title, completed, editing } }) => {
@@ -115,7 +122,7 @@ class TodoItem extends HTMLElement {
     super();
 
     TodoItem.template ||= document.querySelector('#item-tpl');
-    this.#template = new TemplateInstance(TodoItem.template, this, processor);
+    this.#template = new TemplateInstance(TodoItem.template, this.#state, processor);
     TodoItem.template.remove();
     this.append(this.#template);
   }
@@ -133,6 +140,20 @@ class TodoItem extends HTMLElement {
   set editing(val) {
     if (val) this.setAttribute('editing', '');
     else this.removeAttribute('editing');
+  }
+
+  get #state() {
+    let state = {};
+    Object.getOwnPropertyNames(this.constructor.prototype)
+      .forEach(name => (state[name] = this[name]));
+    return {
+      ...this,
+      ...state,
+      startEdit: this.#startEdit,
+      doneEdit: this.#doneEdit,
+      toggle: this.#toggle,
+      save: this.#save,
+    };
   }
 
   attributeChangedCallback() {
@@ -153,16 +174,8 @@ class TodoItem extends HTMLElement {
     }));
   }
 
-  #update = (state = {}) => {
-    Object.getOwnPropertyNames(this.constructor.prototype)
-      .forEach(name => (state[name] = this[name]));
-    this.#template.update({
-      ...state,
-      startEdit: this.#startEdit,
-      doneEdit: this.#doneEdit,
-      toggle: this.#toggle,
-      save: this.#save,
-    });
+  #update = () => {
+    this.#template.update(this.#state);
   }
 
   #toggle = ({ target }) => {
