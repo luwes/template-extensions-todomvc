@@ -8,84 +8,78 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <todo-app>
+    <todo-app></todo-app>
+    <template id="todo-app">
       <header>
         <h1>todos</h1>
         <input
           placeholder="What needs to be done?"
           autofocus
           class="new-todo"
-          onkeyup=""
+          onkeyup="{{addTodo}}"
         >
       </header>
-      <template id="header-tpl">
-        <h1></h1>
-        <input onkeyup="{{addTodo}}">
-      </template>
-      <!-- This section should be hidden by default and shown when there are todos -->
-      <template id="main-tpl">
-        <template directive="if" expression="todosCount">
-          <section class="main">
-            <input
-              id="toggle-all"
-              class="toggle-all"
-              type="checkbox"
-              oninput="{{toggleAll}}"
-              checked="{{allCompleted}}"
-            >
-            <label for="toggle-all">Mark all as complete</label>
-
-            <div class="todo-list">
-              <template directive="foreach" expression="todos">
-                <todo-item
-                  title="{{title}}"
-                  id="{{id}}"
-                  completed="{{completed}}"
-                  editing="{{editing}}"
-                ></todo-item>
-              </template>
-            </div>
-          </section>
-          <!-- This footer should be hidden by default and shown when there are todos -->
-          <footer class="footer">
-            <!-- This should be `0 items left` by default -->
-            <span class="todo-count"><strong>{{activeCount}}</strong> items left</span>
-            <!-- Remove this if you don't implement routing -->
-            <ul class="filters">
-              <li><a class="{{allSelected}}" href="#/">All</a></li>
-              <li><a class="{{activeSelected}}" href="#/active">Active</a></li>
-              <li><a class="{{completedSelected}}" href="#/completed">Completed</a></li>
-            </ul>
-            <!-- Hidden if no completed items are left ↓ -->
-            <template directive="if" expression="completedCount">
-              <button class="clear-completed" onclick="{{clearCompleted}}">
-                Clear completed
-              </button>
-            </template>
-          </footer>
-        </template>
-      </template>
-      <template id="item-tpl">
-        <div class="view">
+      <template directive="if" expression="todosCount">
+        <section class="main">
           <input
-            class="toggle"
+            id="toggle-all"
+            class="toggle-all"
             type="checkbox"
-            checked="{{completed}}"
-            oninput="{{toggle}}"
+            oninput="{{toggleAll}}"
+            checked="{{allCompleted}}"
           >
-          <label ondblclick="{{startEdit}}">{{title}}</label>
-          <button class="destroy" onclick="{{destroy}}"></button>
-        </div>
-        <template directive="if" expression="editing">
-          <input
-            class="edit"
-            value="{{title}}"
-            onfocusout="{{save}}"
-            onkeyup="{{doneEdit}}"
-          >
-        </template>
+          <label for="toggle-all">Mark all as complete</label>
+
+          <div class="todo-list">
+            <template directive="foreach" expression="todos">
+              <todo-item
+                title="{{title}}"
+                id="{{id}}"
+                completed="{{completed}}"
+                editing="{{editing}}"
+              ></todo-item>
+            </template>
+          </div>
+        </section>
+        <!-- This footer should be hidden by default and shown when there are todos -->
+        <footer class="footer">
+          <!-- This should be `0 items left` by default -->
+          <span class="todo-count"><strong>{{activeCount}}</strong> items left</span>
+          <!-- Remove this if you don't implement routing -->
+          <ul class="filters">
+            <li><a class="{{allSelected}}" href="#/">All</a></li>
+            <li><a class="{{activeSelected}}" href="#/active">Active</a></li>
+            <li><a class="{{completedSelected}}" href="#/completed">Completed</a></li>
+          </ul>
+          <!-- Hidden if no completed items are left ↓ -->
+          <template directive="if" expression="completedCount">
+            <button class="clear-completed" onclick="{{clearCompleted}}">
+              Clear completed
+            </button>
+          </template>
+        </footer>
       </template>
-    </todo-app>
+    </template>
+    <template id="todo-item">
+      <div class="view">
+        <input
+          class="toggle"
+          type="checkbox"
+          checked="{{completed}}"
+          oninput="{{toggle}}"
+        >
+        <label ondblclick="{{startEdit}}">{{title}}</label>
+        <button class="destroy" onclick="{{destroy}}"></button>
+      </div>
+      <template directive="if" expression="editing">
+        <input
+          class="edit"
+          value="{{title}}"
+          onfocusout="{{save}}"
+          onkeyup="{{doneEdit}}"
+        >
+      </template>
+    </template>
     <footer class="info">
       <p>Double-click to edit a todo</p>
       <p>Created by <a href="https://twitter.com/luwes">Wesley Luyten</a></p>
