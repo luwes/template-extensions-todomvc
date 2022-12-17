@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "cookie": "^0.5.0",
-    "js-cookie": "^3.0.1",
-    "template-extensions": "^0.5.1"
+    "cookie": "0.5.0",
+    "js-cookie": "3.0.1",
+    "template-extensions": "0.6.0"
   }
 }
