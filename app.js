@@ -1,5 +1,5 @@
-import { AssignedTemplateInstance, TemplateInstance } from 'https://cdn.jsdelivr.net/npm/template-extensions/+esm';
-import Cookies from 'https://cdn.jsdelivr.net/npm/js-cookie/+esm';
+import { AssignedTemplateInstance, TemplateInstance } from './node_modules/template-extensions/src/index.js';
+import Cookies from './node_modules/js-cookie/dist/js.cookie.mjs';
 import { processor } from './template-processor.js';
 
 class TodoApp extends HTMLElement {
@@ -14,13 +14,15 @@ class TodoApp extends HTMLElement {
     const stored = Cookies.get('todos-tex');
     this.#todos = stored ? JSON.parse(stored).todos : [];
 
-    let tpl = document.querySelector('#header-tpl');
-    new AssignedTemplateInstance(document.querySelector('header'), tpl, this);
+    let tpl = document.querySelector('#todo-app');
     tpl.remove();
 
-    tpl = document.querySelector('#main-tpl');
-    this.#template = new TemplateInstance(tpl, this.#state, processor);
-    tpl.replaceWith(this.#template);
+    if (this.children.length) {
+      this.#template = new AssignedTemplateInstance(this, tpl, this.#state, processor);
+    } else {
+      this.#template = new TemplateInstance(tpl, this.#state, processor);
+      this.append(this.#template);
+    }
 
     this.addEventListener('destroy', this.handleEvent);
     this.addEventListener('save', this.handleEvent);
@@ -46,11 +48,11 @@ class TodoApp extends HTMLElement {
   #update = () => {
     this.#save();
     this.#template.update(this.#state);
-  }
+  };
 
   #save = () => {
     Cookies.set('todos-tex', JSON.stringify({ todos: this.#todos }));
-  }
+  };
 
   attributeChangedCallback() {
     this.#update();
@@ -88,7 +90,7 @@ class TodoApp extends HTMLElement {
       Object.assign(todo, { title, completed, editing });
       this.#update();
     }
-  }
+  };
 
   addTodo = ({ target, key }) => {
     let title = target.value.trim();
@@ -97,17 +99,17 @@ class TodoApp extends HTMLElement {
       target.value = '';
       this.#update();
     }
-  }
+  };
 
   toggleAll = ({ target }) => {
     this.#todos = this.#todos.map(todo => ({ ...todo, completed: target.checked }));
     this.#update();
-  }
+  };
 
   clearCompleted = () => {
     this.#todos = this.#todos.filter(todo => !todo.completed);
     this.#update();
-  }
+  };
 }
 
 customElements.define('todo-app', TodoApp);
@@ -121,10 +123,15 @@ class TodoItem extends HTMLElement {
   constructor() {
     super();
 
-    TodoItem.template ||= document.querySelector('#item-tpl');
-    this.#template = new TemplateInstance(TodoItem.template, this.#state, processor);
+    TodoItem.template ||= document.querySelector('#todo-item');
     TodoItem.template.remove();
-    this.append(this.#template);
+
+    if (this.children.length) {
+      this.#template = new AssignedTemplateInstance(this, TodoItem.template, this.#state, processor);
+    } else {
+      this.#template = new TemplateInstance(TodoItem.template, this.#state, processor);
+      this.append(this.#template);
+    }
   }
 
   get title() { return this.getAttribute('title'); }
@@ -165,31 +172,31 @@ class TodoItem extends HTMLElement {
       detail: this,
       bubbles: true
     }));
-  }
+  };
 
   #save = () => {
     this.dispatchEvent(new CustomEvent('save', {
       detail: this,
       bubbles: true
     }));
-  }
+  };
 
   #update = () => {
     this.#template.update(this.#state);
-  }
+  };
 
   #toggle = ({ target }) => {
     this.completed = target.checked;
     this.#save();
-  }
+  };
 
-  #startEdit = ({ target }) => {
+  #startEdit = () => {
     this.editing = true;
 
     const input = this.querySelector('.edit');
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
-  }
+  };
 
   #doneEdit = ({ key, target }) => {
     if (key === "Enter") {
@@ -200,7 +207,7 @@ class TodoItem extends HTMLElement {
     else if (key === "Escape") {
       this.editing = false;
     }
-  }
+  };
 }
 
 customElements.define('todo-item', TodoItem);

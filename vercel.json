@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/node_modules/:match*", "destination": "/web_modules/:match*" }
+  ]
+}
