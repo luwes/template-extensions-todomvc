@@ -28,10 +28,6 @@ export function onRequest({ request }) {
   return fetch(request);
 }
 
-function minify(html) {
-  return html.replace(/([^\S]\s*|\s{2,})(?=[^<]*(?:<(?!\/?(?:textarea|pre|script)\b)[^<]*)*(?:<(textarea|pre|script)\b|$(?![\r\n])))/gm, ' ');
-}
-
 processParts.unshift(processSsrDirective, processEvent);
 const processor = createProcessor(processParts);
 
