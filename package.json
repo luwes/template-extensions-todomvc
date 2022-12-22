@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "prepare": "mv node_modules web_modules"
+  },
   "dependencies": {
     "cookie": "0.5.0",
     "js-cookie": "3.0.1",
