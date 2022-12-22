@@ -1,6 +1,6 @@
 import { parse } from 'cookie';
 import { renderToString } from '../node_modules/template-extensions/src/extras/ssr.js';
-import { TemplateInstance, InnerTemplatePart } from '../node_modules/template-extensions/src/index.js';
+import { TemplateInstance, InnerTemplatePart, AttrPart } from '../node_modules/template-extensions/src/index.js';
 import { createProcessor, processParts } from '../template-processor.js';
 import html from '../template.html';
 
@@ -13,6 +13,7 @@ export function onRequest({ request }) {
     const todos = JSON.parse(stored).todos ?? [];
     const state = {
       todos,
+      server: true,
       todosCount: todos.length,
       allCompleted: todos.every(t => t.completed),
       completedCount: todos.filter(t => t.completed).length,
@@ -27,7 +28,12 @@ export function onRequest({ request }) {
   return fetch(request);
 }
 
-export const processor = createProcessor([processSsrDirective, ...processParts]);
+function minify(html) {
+  return html.replace(/([^\S]\s*|\s{2,})(?=[^<]*(?:<(?!\/?(?:textarea|pre|script)\b)[^<]*)*(?:<(textarea|pre|script)\b|$(?![\r\n])))/gm, ' ');
+}
+
+processParts.unshift(processSsrDirective, processEvent);
+const processor = createProcessor(processParts);
 
 const templateProcessor = createProcessor([
   processTemplateSsr,
@@ -42,6 +48,11 @@ function processSsrDirective(part, expr, state) {
 
     const content = new TemplateInstance(part.template, state, processor);
 
+    if (!state.server) {
+      part.replace(content);
+      return true;
+    }
+
     innerSsrTemplates = [];
 
     const instance = new TemplateInstance(part.template, {}, templateProcessor);
@@ -52,6 +63,13 @@ function processSsrDirective(part, expr, state) {
     template.appendChild(instance);
 
     part.replace(content, template, ...innerSsrTemplates);
+    return true;
+  }
+}
+
+function processEvent(part) {
+  if (part instanceof AttrPart && part.attributeName.startsWith('on')) {
+    part.element.removeAttribute(part.attributeName);
     return true;
   }
 }
