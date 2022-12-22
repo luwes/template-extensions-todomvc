@@ -10,7 +10,7 @@ export function onRequest({ request }) {
   if (url.pathname === '/' || url.pathname.startsWith('/index.html')) {
 
     const stored = parse(request.headers.get('Cookie') || '')['todos-tex'];
-    const todos = JSON.parse(stored).todos ?? [];
+    const todos = stored && JSON.parse(stored).todos || [];
     const state = {
       todos,
       server: true,
