@@ -1,10 +1,10 @@
-import { parse } from 'cookie';
-import { renderToString } from '../node_modules/template-extensions/src/extras/ssr.js';
-import { TemplateInstance, InnerTemplatePart, AttrPart } from '../node_modules/template-extensions/src/index.js';
+import { parse } from '../web_modules/cookie/index.js';
+import { renderToString } from '../web_modules/template-extensions/src/extras/ssr.js';
+import { TemplateInstance, InnerTemplatePart, AttrPart } from '../web_modules/template-extensions/src/index.js';
 import { createProcessor, processParts } from '../template-processor.js';
 import html from '../template.html';
 
-export function onRequest({ request, env }) {
+export function onRequest({ request }) {
   const url = new URL(request.url);
 
   if (url.pathname === '/' || url.pathname.startsWith('/index.html')) {
@@ -25,7 +25,7 @@ export function onRequest({ request, env }) {
       headers: { 'Content-Type': 'text/html' }
     });
   }
-  return env.ASSETS.fetch(request);
+  return fetch(request);
 }
 
 processParts.unshift(processSsrDirective, processEvent);

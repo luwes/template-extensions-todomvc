@@ -1,4 +1,4 @@
-import { AttrPart, AssignedTemplateInstance, TemplateInstance, InnerTemplatePart } from './node_modules/template-extensions/src/index.js';
+import { AttrPart, AssignedTemplateInstance, TemplateInstance, InnerTemplatePart } from './web_modules/template-extensions/src/index.js';
 
 export const createProcessor = (processParts) => ({
   processCallback(instance, parts, state) {

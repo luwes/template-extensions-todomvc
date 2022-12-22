@@ -1,5 +1,5 @@
-import { AssignedTemplateInstance, TemplateInstance } from './node_modules/template-extensions/src/index.js';
-import Cookies from './node_modules/js-cookie/dist/js.cookie.mjs';
+import { AssignedTemplateInstance, TemplateInstance } from './web_modules/template-extensions/src/index.js';
+import Cookies from './web_modules/js-cookie/dist/js.cookie.mjs';
 import { processor } from './template-processor.js';
 
 class TodoApp extends HTMLElement {
