@@ -1,4 +1,4 @@
-import { AttrPart, TemplateInstance, InnerTemplatePart } from './node_modules/template-extensions/src/index.js';
+import { AttrPart, AssignedTemplateInstance, TemplateInstance, InnerTemplatePart } from './node_modules/template-extensions/src/index.js';
 
 export const createProcessor = (processParts) => ({
   processCallback(instance, parts, state) {
@@ -10,7 +10,6 @@ export const createProcessor = (processParts) => ({
 });
 
 export const processParts = [
-  processSsrDirective,
   processIfDirective,
   processForeachDirective,
   processEvent,
@@ -20,23 +19,36 @@ export const processParts = [
 
 export const processor = createProcessor(processParts);
 
-function processSsrDirective(part, expr, state) {
-  if (part instanceof InnerTemplatePart && part.directive === 'ssr') {
-    const content = new TemplateInstance(part.template, state, processor);
-    part.replace(content);
-    return true;
-  }
-}
+const ifTemplates = new WeakMap();
+const templateInstances = new WeakMap();
 
 function processIfDirective(part, expr, state, instance) {
   if (part instanceof InnerTemplatePart && part.directive === 'if') {
-    if (!instance.assign) {
+    const { parentNode } = part;
+    if (instance.assign) {
       if (state[expr]) {
-        const template = new TemplateInstance(part.template, state, processor);
-        part.replace(template);
-      } else {
-        part.replace('');
+        ifTemplates.set(parentNode, part.template);
+
+        const tpl = new AssignedTemplateInstance(parentNode, part.template, state, processor);
+        templateInstances.set(parentNode, tpl);
       }
+      return true;
+    }
+
+    if (state[expr]) {
+      if (ifTemplates.get(parentNode) !== part.template) {
+        ifTemplates.set(parentNode, part.template);
+
+        const tpl = new TemplateInstance(part.template, state, processor);
+        part.replace(tpl);
+        templateInstances.set(parentNode, tpl);
+      } else {
+        templateInstances.get(parentNode)?.update(state);
+      }
+    } else {
+      part.replace('');
+      ifTemplates.delete(parentNode);
+      templateInstances.delete(parentNode);
     }
     return true;
   }
@@ -44,11 +56,32 @@ function processIfDirective(part, expr, state, instance) {
 
 function processForeachDirective(part, expr, state, instance) {
   if (part instanceof InnerTemplatePart && part.directive === 'foreach') {
-    if (!instance.assign) {
-      part.replace((state[expr] ?? []).map(item => {
-        return new TemplateInstance(part.template, item, processor);
-      }));
+    if (instance.assign) {
+      state[expr].forEach((item, i) => {
+        const childNodes = [part.replacementNodes[i]];
+        const tpl = new AssignedTemplateInstance(
+          { childNodes },
+          part.template,
+          item,
+          processor
+        );
+        templateInstances.set(item, { tpl, childNodes });
+      });
+      return true;
     }
+
+    part.replace((state[expr] ?? []).map(item => {
+      let { tpl, childNodes } = templateInstances.get(item) ?? {};
+      if (tpl) {
+        tpl.update(item);
+        return childNodes;
+      }
+
+      tpl = new TemplateInstance(part.template, item, processor);
+      childNodes = [...tpl.childNodes];
+      templateInstances.set(item, { tpl, childNodes });
+      return childNodes;
+    }));
     return true;
   }
 }
@@ -65,12 +98,15 @@ function processBooleanAttribute(part, expr, state) {
 
 function processEvent(part, expr, state) {
   if (typeof state[expr] === 'function' && part instanceof AttrPart) {
-    part.element.removeAttribute(part.attributeName);
+    part.value = undefined;
     part.element[part.attributeName] = state[expr];
     return true;
   }
 }
 
 function processPropertyIdentity(part, expr, state) {
-  part.value = String(state[expr] ?? '');
+  const val = String(state[expr] ?? '');
+  if (val !== part.value) {
+    part.value = val;
+  }
 }

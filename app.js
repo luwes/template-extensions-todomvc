@@ -102,7 +102,7 @@ class TodoApp extends HTMLElement {
   };
 
   toggleAll = ({ target }) => {
-    this.#todos = this.#todos.map(todo => ({ ...todo, completed: target.checked }));
+    this.#todos.forEach(todo => (todo.completed = target.checked));
     this.#update();
   };
 
