@@ -4,7 +4,7 @@ import { TemplateInstance, InnerTemplatePart, AttrPart } from '../node_modules/t
 import { createProcessor, processParts } from '../template-processor.js';
 import html from '../template.html';
 
-export function onRequest({ request }) {
+export function onRequest({ request, env }) {
   const url = new URL(request.url);
 
   if (url.pathname === '/' || url.pathname.startsWith('/index.html')) {
@@ -25,7 +25,7 @@ export function onRequest({ request }) {
       headers: { 'Content-Type': 'text/html' }
     });
   }
-  return fetch(request);
+  return env.ASSETS.fetch(request);
 }
 
 processParts.unshift(processSsrDirective, processEvent);
