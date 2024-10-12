@@ -3,7 +3,7 @@
     "prepare": "mv node_modules web_modules"
   },
   "dependencies": {
-    "cookie": "0.5.0",
+    "cookie": "0.7.0",
     "js-cookie": "3.0.1",
     "template-extensions": "0.7.0"
   }
